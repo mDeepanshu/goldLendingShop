@@ -16,7 +16,7 @@ const Orders = require('./models/Orders');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-var serviceAccount = require("../serviceAccountKey.json");
+var serviceAccount = require("./serviceAccountKey.json");
 const { firestore } = require('firebase-admin');
 
 admin.initializeApp({
