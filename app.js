@@ -28,7 +28,7 @@ var db = admin.firestore();
 let customerLength ;
 let idToUse ;
 let lastIdUsedDate ;
-let isInternet;
+let isInternet=true;
 today = new Date();
 if (String(today.getMonth()+1).length==1) {
   modiMonth= '0'+ String(today.getMonth()+1)
@@ -68,33 +68,32 @@ mongoose
       );
       next();
   });
-  
-  //0
-  app.post("/api/connectionChange", (req, res) => {
-    console.log("online");
-    let status= req.body.status;
-    if (status == true) {
-      this.isInternet=true;  
-        check_Sync_Status();
-        listenFCus();
+  listenFCus();
        listenFOrders();
-       check_Cus_Sync_Status();
+  //0
+// app.post("/api/connectionChange", (req, res) => {
+  //   console.log("online");
+  //   let status= req.body.status;
+  //   if (status == true) {
+  //     this.isInternet=true;  
+  //       check_Sync_Status();
+  //      check_Cus_Sync_Status();
         
-    }
-    else if(status == false){
-      console.log("offline");
-      this.isInternet=false;
-      const unsubOrders = db.collection('orders').onSnapshot(() => {});
-      unsubOrders();
-      const unsubCus = db.collection('customers').onSnapshot(() => {});
-      unsubCus();
+  //   }
+  //   else if(status == false){
+  //     console.log("offline");
+  //     this.isInternet=false;
+  //     const unsubOrders = db.collection('orders').onSnapshot(() => {});
+  //     unsubOrders();
+  //     const unsubCus = db.collection('customers').onSnapshot(() => {});
+  //     unsubCus();
       
-    }
-    res.status(201).json({
-      message: 'read successfully'
-    });
+  //   }
+  //   res.status(201).json({
+  //     message: 'read successfully'
+  //   });
 
-  });
+  // });
   // 1
   app.post("/api/transactions", async(req, res) => {
 
@@ -121,11 +120,9 @@ mongoose
 
     }
     transactions.save();
-    if (this.isInternet) {
       const res0 = await db.collection('transactions').doc(String(this.idToUse)).set(transactionsF);    
       const cityRef = db.collection('values').doc('values');
       const res1 = cityRef.update({today_transactions: this.idToUse});
-    }
     Lastiduseds.updateOne( {_id:0} ,{$inc:{ID:1}},{upsert:true}).then(console.log("lastIdused updates"));
     res.status(201).json({
       message: 'Post added successfully'
@@ -152,9 +149,7 @@ mongoose
       transactions:[]
     }
     customer.save();
-    if (this.isInternet) {
          const res0 =  db.collection('customer').doc(String(this.customerLength)).set(customerF);
-    }
  
     Length.updateOne( {_id:2} ,{$inc:{length:1}},{upsert:true}).then(console.log("customer last id updates"));
 
@@ -163,13 +158,10 @@ mongoose
   app.post("/api/cusTran", (req, res) => { //find
     Customer.findOne({ _id: req.body.uid}).then(async(customer) => {
       customer.transactions.push( this.idToUse )
-      if (this.isInternet) {
         const washingtonRef = db.collection('customer').doc(String(req.body.uid));
       const unionRes = await washingtonRef.update({
         transactions: admin.firestore.FieldValue.arrayUnion(String(this.idToUse))
       });
-      }
-      
       customer.save()
     });
     res.status(201).json({
@@ -314,12 +306,10 @@ mongoose
   });
   // 12
   app.post("/api/return", async(req, res) => {
-    if (this.isInternet) {
       const cityRef  =  db.collection('transactions').doc(String(req.body._id));
       const res0 =  cityRef.update({profit:req.body.profit,returnDate:date});
       const cityRef1 = db.collection('values').doc('values');
       const res1 =  cityRef1.update({today_transactions: this.idToUse});
-    }
     Lastiduseds.updateOne( {_id:0} ,{$inc:{ID:1}},{upsert:true}).then(console.log("lastIdused updates return"));
     Transactions.findOneAndUpdate({ _id: req.body._id},{$set:{profit:req.body.profit,returnDate:date}})
     .then(transactions => {
@@ -343,11 +333,9 @@ mongoose
       description: req.body.description,
     }
     debitCredit.save();
-    if (this.isInternet) {
         const res0 =  db.collection('debitCredit').doc(String(this.idToUse)).set(dc);
         const cityRef = db.collection('values').doc('values');
         const res1 =  cityRef.update({today_transactions: this.idToUse});
-    }
     Lastiduseds.updateOne( {_id:0} ,{$inc:{ID:1}},{upsert:true}).then(console.log("lastIdused updates return"));
     res.status(201).json({
       message: 'Post added successfully'
@@ -355,10 +343,8 @@ mongoose
   })
   // 14
   app.post("/api/mainBal", async(req, res) => { 
-    if (this.isInternet) {
      const cityRef  =  db.collection('values').doc('values');
      const res0 = await cityRef.update({base_bal:req.body[6]});
-    }
 
     Reports.updateOne( {_id:1} ,{$set:{transactions:req.body}},{upsert:true}).then(result => {
     });
@@ -368,10 +354,8 @@ mongoose
   })
   // 15
   app.post("/api/addToReports", async(req, res) => { 
-    if (this.isInternet) {
       const cityRef  =  db.collection('values').doc('values');
       const res0 = cityRef.update({base_bal:req.body[6]});
-    }
 
     Reports.updateOne( {_id:1} ,{$set:{transactions:req.body}},{upsert:true}).then(console.log("done"))
     res.status(201).json({
@@ -429,10 +413,8 @@ mongoose
         
         const cityRef = db.collection('values').doc('values');
         Lastiduseds.findOneAndUpdate({ _id:0},{$set:{date:date}}).then(console.log(date))
-          if (this.isInternet) {
              const res0 = cityRef.update({date: date});
              const res1 = db.collection('type_of_transaction').doc(String(id)).set(order);
-          }
         order.save();
     }
     }
@@ -448,9 +430,7 @@ mongoose
       date:this.date,
       T:req.body.T
      }
-      if (this.isInternet) {
          const res0 = db.collection('type_of_transaction').doc(String(id)).set(orderF);
-      }
 
     order.save();
   
@@ -610,149 +590,149 @@ mongoose
     
   }
 
-  function check_Sync_Status(){
-    let localid;
-    let firestoreid;
+  // function check_Sync_Status(){
+  //   let localid;
+  //   let firestoreid;
 
-    const promise1 = new Promise(async(res,rej) => {
-      const doc = await db.collection('values').doc('values').get();
-     if (doc.exists){
-        console.log('Document data:', doc.data().today_transactions);
-        firestoreid= doc.data().today_transactions;
-        res();
-      }       
+  //   const promise1 = new Promise(async(res,rej) => {
+  //     const doc = await db.collection('values').doc('values').get();
+  //    if (doc.exists){
+  //       console.log('Document data:', doc.data().today_transactions);
+  //       firestoreid= doc.data().today_transactions;
+  //       res();
+  //     }       
       
-    })
-    const promise2 = new Promise((res,rej) => {
-      Lastiduseds.findOne({_id:0}).then(document => {
-        console.log(document);
-        localid = document.ID;
-        res();
-      })
+  //   })
+  //   const promise2 = new Promise((res,rej) => {
+  //     Lastiduseds.findOne({_id:0}).then(document => {
+  //       console.log(document);
+  //       localid = document.ID;
+  //       res();
+  //     })
      
-    }) 
-    Promise.all([promise1,promise2]).then(()=>{
-      console.log("T",localid,Number(firestoreid));
+  //   }) 
+  //   Promise.all([promise1,promise2]).then(()=>{
+  //     console.log("T",localid,Number(firestoreid));
 
-     if (localid>Number(firestoreid)) {
-      syncLtoF(localid-Number(firestoreid));
-     }
-    })
+  //    if (localid>Number(firestoreid)) {
+  //     syncLtoF(localid-Number(firestoreid));
+  //    }
+  //   })
 
-  }
+  // }
 
-   function syncLtoF(diff){
-    let tranCount=0;
-    let dcCount=0 ;
-    let rtransCount=0 ;
-    Orders.aggregate([{$sort:{_id:-1}},{$limit:Number(diff)}]).then(async(documents)=> {
-      console.log(documents);
-      const batch = db.batch();
-      for (let i = 0; i < documents.length; i++) {
-        const nycRef = db.collection('type_of_transaction').doc(String(documents[i]._id));
-        batch.set(nycRef, documents[i]);
-        switch (documents[i].T) {
-          case 'DC'://dc
-          dcCount++
-            break;
-          case 'R'://r
-          rtransCount++
-            break;
-          case 'T'://t
-          tranCount++
-            break;
-        }
-      }
-      batch.commit();
-      const cityRef = db.collection('values').doc('values');
-      const res1 = cityRef.update({date: date,today_transactions:admin.firestore.FieldValue.increment(diff) });
-      if (tranCount!=0) {
-        then_sync_Tran_L_to_F(tranCount);
-      }
-      if (dcCount!=0) {
-        then_sync_DC_L_to_F(dcCount);
-      }
-      if (rtransCount!=0) {
-        then_sync_RTran_L_to_F(rtransCount);
-      }
-    })
-  }
+  //  function syncLtoF(diff){
+  //   let tranCount=0;
+  //   let dcCount=0 ;
+  //   let rtransCount=0 ;
+  //   Orders.aggregate([{$sort:{_id:-1}},{$limit:Number(diff)}]).then(async(documents)=> {
+  //     console.log(documents);
+  //     const batch = db.batch();
+  //     for (let i = 0; i < documents.length; i++) {
+  //       const nycRef = db.collection('type_of_transaction').doc(String(documents[i]._id));
+  //       batch.set(nycRef, documents[i]);
+  //       switch (documents[i].T) {
+  //         case 'DC'://dc
+  //         dcCount++
+  //           break;
+  //         case 'R'://r
+  //         rtransCount++
+  //           break;
+  //         case 'T'://t
+  //         tranCount++
+  //           break;
+  //       }
+  //     }
+  //     batch.commit();
+  //     const cityRef = db.collection('values').doc('values');
+  //     const res1 = cityRef.update({date: date,today_transactions:admin.firestore.FieldValue.increment(diff) });
+  //     if (tranCount!=0) {
+  //       then_sync_Tran_L_to_F(tranCount);
+  //     }
+  //     if (dcCount!=0) {
+  //       then_sync_DC_L_to_F(dcCount);
+  //     }
+  //     if (rtransCount!=0) {
+  //       then_sync_RTran_L_to_F(rtransCount);
+  //     }
+  //   })
+  // }
 
-  function then_sync_Tran_L_to_F(len) {
-    console.log("then_sync_Tran_L_to_F len",len);
-    Transactions.aggregate([{$sort:{_id:-1}},{$limit:Number(len)}]).then(documents =>{
-    const batch1 = db.batch();
-      for (let i = 0; i < documents.length; i++) {
-        const Trs = db.collection('transactions').doc(String(documents[i]._id));
-        batch1.set(Trs, documents[i]);
-      }
-     batch1.commit();
+  // function then_sync_Tran_L_to_F(len) {
+  //   console.log("then_sync_Tran_L_to_F len",len);
+  //   Transactions.aggregate([{$sort:{_id:-1}},{$limit:Number(len)}]).then(documents =>{
+  //   const batch1 = db.batch();
+  //     for (let i = 0; i < documents.length; i++) {
+  //       const Trs = db.collection('transactions').doc(String(documents[i]._id));
+  //       batch1.set(Trs, documents[i]);
+  //     }
+  //    batch1.commit();
 
-    })
+  //   })
 
-  }
-  function then_sync_DC_L_to_F(len) {
-    const batch = db.batch();
+  // }
+  // function then_sync_DC_L_to_F(len) {
+  //   const batch = db.batch();
 
-    DebitCredit.aggregate([{$sort:{_id:-1}},{$limit:Number(len)}]).then(documents =>{
-      for (let i = 0; i < documents.length; i++) {
-        const nycRef = db.collection('debitCredit').doc(String(documents[i]._id));
-        batch.set(nycRef, documents[i]);
-      }
-    })
-     batch.commit();
+  //   DebitCredit.aggregate([{$sort:{_id:-1}},{$limit:Number(len)}]).then(documents =>{
+  //     for (let i = 0; i < documents.length; i++) {
+  //       const nycRef = db.collection('debitCredit').doc(String(documents[i]._id));
+  //       batch.set(nycRef, documents[i]);
+  //     }
+  //   })
+  //    batch.commit();
 
-  }
-  function then_sync_RTran_L_to_F(len) {
-    const batch = db.batch();
+  // }
+  // function then_sync_RTran_L_to_F(len) {
+  //   const batch = db.batch();
 
-    Transactions.aggregate([{$sort:{rid:-1}},{$limit:Number(len)}]).then(documents =>{
-      for (let i = 0; i < documents.length; i++) {
-        const nycRef = db.collection('transactions').doc(String(documents[i]._id));
-        batch.set(nycRef, documents[i]);
-      }
-    })
-     batch.commit();
+  //   Transactions.aggregate([{$sort:{rid:-1}},{$limit:Number(len)}]).then(documents =>{
+  //     for (let i = 0; i < documents.length; i++) {
+  //       const nycRef = db.collection('transactions').doc(String(documents[i]._id));
+  //       batch.set(nycRef, documents[i]);
+  //     }
+  //   })
+  //    batch.commit();
 
-  }
-  function check_Cus_Sync_Status() {
-    let localid;
-    let firestoreid;
+  // }
+  // function check_Cus_Sync_Status() {
+  //   let localid;
+  //   let firestoreid;
 
-    const promise1 = new Promise(async(res,rej) => {
-      const citiesRef = db.collection('customer').limit(1);
-      const snapshot = await citiesRef.orderBy('_id','desc').get();    
-      snapshot.forEach(doc => {
-        firestoreid= Number(doc.data()._id)+1
-        res();
-      });
-    })
-    const promise2 = new Promise((res,rej) => {
-      Length.findOne({_id:2}).then(document => {
-        localid = document.length;
-        res();
-      })
-    }) 
+  //   const promise1 = new Promise(async(res,rej) => {
+  //     const citiesRef = db.collection('customer').limit(1);
+  //     const snapshot = await citiesRef.orderBy('_id','desc').get();    
+  //     snapshot.forEach(doc => {
+  //       firestoreid= Number(doc.data()._id)+1
+  //       res();
+  //     });
+  //   })
+  //   const promise2 = new Promise((res,rej) => {
+  //     Length.findOne({_id:2}).then(document => {
+  //       localid = document.length;
+  //       res();
+  //     })
+  //   }) 
 
-    Promise.all([promise1,promise2]).then(()=>{
-      console.log("localid-firestoreid",localid,firestoreid);
-      if (localid>firestoreid) {
-        let diff = Number(localid)-Number(firestoreid)
-        Customer.aggregate([{$sort:{_id:-1}},{$limit:Number(diff)}]).then(documents=> {
-          const batch = db.batch();
-          for (let i = 0; i < documents.length; i++) {
-           console.log(documents[i]._id);
-            const nycRef = db.collection('customer').doc(`${documents[i]._id}`);
-            batch.set(nycRef, documents[0]);
+  //   Promise.all([promise1,promise2]).then(()=>{
+  //     console.log("localid-firestoreid",localid,firestoreid);
+  //     if (localid>firestoreid) {
+  //       let diff = Number(localid)-Number(firestoreid)
+  //       Customer.aggregate([{$sort:{_id:-1}},{$limit:Number(diff)}]).then(documents=> {
+  //         const batch = db.batch();
+  //         for (let i = 0; i < documents.length; i++) {
+  //          console.log(documents[i]._id);
+  //           const nycRef = db.collection('customer').doc(`${documents[i]._id}`);
+  //           batch.set(nycRef, documents[0]);
             
-          }
-          batch.commit();
+  //         }
+  //         batch.commit();
     
-        })
+  //       })
        
-      }
-     })  
-  }
+  //     }
+  //    })  
+  // }
 
 
 
