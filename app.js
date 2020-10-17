@@ -550,11 +550,11 @@ mongoose
     Transactions.insertMany(snapshot.docs.map(doc => doc.data())).then(console.log("Transactions inserted"))
     snapshot.forEach(doc => {
       Customer.findOne({_id:Number(doc.data().cusId)}).then((customer)=>{
-        if(customer!=null){
+        if(customer!=null || undefined || []){
           if (customer.transactions.includes(doc.data()._id)) {
           console.log("in if");
         }
-        else if (customer != undefined ){
+        else{ // updated not pushed
           customer.transactions.push(doc.data()._id)
           console.log(customer);
           const customers = new Customer(customer);
@@ -589,152 +589,6 @@ mongoose
     Transactions.bulkWrite(oppArray);
     
   }
-
-  // function check_Sync_Status(){
-  //   let localid;
-  //   let firestoreid;
-
-  //   const promise1 = new Promise(async(res,rej) => {
-  //     const doc = await db.collection('values').doc('values').get();
-  //    if (doc.exists){
-  //       console.log('Document data:', doc.data().today_transactions);
-  //       firestoreid= doc.data().today_transactions;
-  //       res();
-  //     }       
-      
-  //   })
-  //   const promise2 = new Promise((res,rej) => {
-  //     Lastiduseds.findOne({_id:0}).then(document => {
-  //       console.log(document);
-  //       localid = document.ID;
-  //       res();
-  //     })
-     
-  //   }) 
-  //   Promise.all([promise1,promise2]).then(()=>{
-  //     console.log("T",localid,Number(firestoreid));
-
-  //    if (localid>Number(firestoreid)) {
-  //     syncLtoF(localid-Number(firestoreid));
-  //    }
-  //   })
-
-  // }
-
-  //  function syncLtoF(diff){
-  //   let tranCount=0;
-  //   let dcCount=0 ;
-  //   let rtransCount=0 ;
-  //   Orders.aggregate([{$sort:{_id:-1}},{$limit:Number(diff)}]).then(async(documents)=> {
-  //     console.log(documents);
-  //     const batch = db.batch();
-  //     for (let i = 0; i < documents.length; i++) {
-  //       const nycRef = db.collection('type_of_transaction').doc(String(documents[i]._id));
-  //       batch.set(nycRef, documents[i]);
-  //       switch (documents[i].T) {
-  //         case 'DC'://dc
-  //         dcCount++
-  //           break;
-  //         case 'R'://r
-  //         rtransCount++
-  //           break;
-  //         case 'T'://t
-  //         tranCount++
-  //           break;
-  //       }
-  //     }
-  //     batch.commit();
-  //     const cityRef = db.collection('values').doc('values');
-  //     const res1 = cityRef.update({date: date,today_transactions:admin.firestore.FieldValue.increment(diff) });
-  //     if (tranCount!=0) {
-  //       then_sync_Tran_L_to_F(tranCount);
-  //     }
-  //     if (dcCount!=0) {
-  //       then_sync_DC_L_to_F(dcCount);
-  //     }
-  //     if (rtransCount!=0) {
-  //       then_sync_RTran_L_to_F(rtransCount);
-  //     }
-  //   })
-  // }
-
-  // function then_sync_Tran_L_to_F(len) {
-  //   console.log("then_sync_Tran_L_to_F len",len);
-  //   Transactions.aggregate([{$sort:{_id:-1}},{$limit:Number(len)}]).then(documents =>{
-  //   const batch1 = db.batch();
-  //     for (let i = 0; i < documents.length; i++) {
-  //       const Trs = db.collection('transactions').doc(String(documents[i]._id));
-  //       batch1.set(Trs, documents[i]);
-  //     }
-  //    batch1.commit();
-
-  //   })
-
-  // }
-  // function then_sync_DC_L_to_F(len) {
-  //   const batch = db.batch();
-
-  //   DebitCredit.aggregate([{$sort:{_id:-1}},{$limit:Number(len)}]).then(documents =>{
-  //     for (let i = 0; i < documents.length; i++) {
-  //       const nycRef = db.collection('debitCredit').doc(String(documents[i]._id));
-  //       batch.set(nycRef, documents[i]);
-  //     }
-  //   })
-  //    batch.commit();
-
-  // }
-  // function then_sync_RTran_L_to_F(len) {
-  //   const batch = db.batch();
-
-  //   Transactions.aggregate([{$sort:{rid:-1}},{$limit:Number(len)}]).then(documents =>{
-  //     for (let i = 0; i < documents.length; i++) {
-  //       const nycRef = db.collection('transactions').doc(String(documents[i]._id));
-  //       batch.set(nycRef, documents[i]);
-  //     }
-  //   })
-  //    batch.commit();
-
-  // }
-  // function check_Cus_Sync_Status() {
-  //   let localid;
-  //   let firestoreid;
-
-  //   const promise1 = new Promise(async(res,rej) => {
-  //     const citiesRef = db.collection('customer').limit(1);
-  //     const snapshot = await citiesRef.orderBy('_id','desc').get();    
-  //     snapshot.forEach(doc => {
-  //       firestoreid= Number(doc.data()._id)+1
-  //       res();
-  //     });
-  //   })
-  //   const promise2 = new Promise((res,rej) => {
-  //     Length.findOne({_id:2}).then(document => {
-  //       localid = document.length;
-  //       res();
-  //     })
-  //   }) 
-
-  //   Promise.all([promise1,promise2]).then(()=>{
-  //     console.log("localid-firestoreid",localid,firestoreid);
-  //     if (localid>firestoreid) {
-  //       let diff = Number(localid)-Number(firestoreid)
-  //       Customer.aggregate([{$sort:{_id:-1}},{$limit:Number(diff)}]).then(documents=> {
-  //         const batch = db.batch();
-  //         for (let i = 0; i < documents.length; i++) {
-  //          console.log(documents[i]._id);
-  //           const nycRef = db.collection('customer').doc(`${documents[i]._id}`);
-  //           batch.set(nycRef, documents[0]);
-            
-  //         }
-  //         batch.commit();
-    
-  //       })
-       
-  //     }
-  //    })  
-  // }
-
-
 
 
 
