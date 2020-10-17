@@ -449,13 +449,12 @@ mongoose
     const observer = doc.onSnapshot(docSnapshot => {
       docSnapshot.forEach(doc => {
         Customer.aggregate([{$sort:{_id:-1}},{$limit:1}]).then(documents => {
-          if (documents == null || [] || undefined) {
-            if (Number(doc.data()._id)>-1) {
-              syncCus(Number(doc.data()._id)+1);
-            }
+          console.log("line 477",documents.length,doc.data()._id);
+          if(documents.length!=0 && doc.data()._id>documents[0]._id ){
+           syncCus(doc.data()._id-documents[0]._id);
           }
-          else if (documents[0]._id!=Number(doc.data()._id)) {
-            syncCus(Number(doc.data()._id)-documents[0]._id);
+          else if(documents.length===0){
+           syncCus(doc.data()._id+1);
           }
         })
     }); 
@@ -480,8 +479,7 @@ mongoose
     Customer.insertMany(result).then(function(){ 
       console.log("Customer inserted")  // Success 
       Length.updateOne( {_id:2} ,{$inc:{length:Number(diff)}},{upsert:true}).then(console.log("L"))
-  }).catch(function(error){ 
-
+  }).catch(function(error){
       console.log("error",error)      // Failure 
   }); 
 
@@ -489,25 +487,24 @@ mongoose
   }
 
    function listenFOrders() {
-    console.log("1");
-    const doc = db.collection('type_of_transaction').orderBy("_id","desc").limit(1);
-    const observer = doc.onSnapshot(docSnapshot => {
-      // console.log(docSnapshot);
-      docSnapshot.forEach(doc => {
-        Lastiduseds.findOne({_id:0}).then(documents => {
-            diff = (Number(doc.data()._id)+1)-documents.ID;
-            if(diff>0){
-              syncFtoL(String(diff))
-          }
-        })
-    }); 
+    const doc = db.collection('values').doc('values');
+    const observer = doc.onSnapshot(doc => {
+      Lastiduseds.find({"_id":0}).then(documents => {
+        console.log("line519",documents[0].ID,doc.data().today_transactions);
+        if(documents[0].ID!=0 && doc.data().today_transactions>documents[0].ID ){
+          syncFtoL(doc.data().today_transactions-documents[0].ID);
+         }
+         else if(documents[0].ID===0){
+          syncFtoL(doc.data().today_transactions+1);
+         }
+
+      })
     }, err => {
       console.log(`Encountered error: ${err}`);
     });
+   
   }
-// LastCheckedIds
   async function syncFtoL(diff) {
-    console.log("diff",diff);
     let tranCount=0;
     let dcCount=0 ;
     let rtransCount=0 ;
@@ -517,7 +514,6 @@ mongoose
     Orders.insertMany(snapshot.docs.map(doc => doc.data())).then(console.log("orders inserted"));
     Lastiduseds.updateOne( {_id:0} ,{$inc:{ID:Number(diff)}},{upsert:true}).then(console.log("Lastiduseds"));
       snapshot.forEach(doc => {
-        // console.log(doc.data());
         switch (doc.data().T) {
           case 'DC'://dc
           dcCount++
@@ -530,10 +526,8 @@ mongoose
             break;
         }
       });
-    console.log(tranCount,dcCount,rtransCount);
     if (tranCount!=0) {
       then_sync_Tran_F_to_L(tranCount);
-      console.log("tranCount",tranCount);
     }
     if (dcCount!=0) {
       then_sync_DC_F_to_L(dcCount-1);
@@ -546,20 +540,16 @@ mongoose
   async function then_sync_Tran_F_to_L(len) {
     const citiesRef = db.collection('transactions');
     const snapshot = await citiesRef.orderBy('_id','desc').limit(Number(len)).get();
-    console.log(snapshot.docs.map(doc => doc.data()));
     Transactions.insertMany(snapshot.docs.map(doc => doc.data())).then(console.log("Transactions inserted"))
     snapshot.forEach(doc => {
       Customer.findOne({_id:Number(doc.data().cusId)}).then((customer)=>{
-        if(customer!=null || undefined || []){
+        if(customer!=null){
           if (customer.transactions.includes(doc.data()._id)) {
-          console.log("in if");
         }
-        else{ // updated not pushed
+        else if (customer != undefined ){
           customer.transactions.push(doc.data()._id)
-          console.log(customer);
           const customers = new Customer(customer);
           customers.save().then(console.log("done"));
-          console.log("in then_sync_Tran_F_to_L in forEach in customer find one in for in else");
         }
       }
       })
@@ -573,14 +563,11 @@ mongoose
 
   }
   async function then_sync_RTran_F_to_L(len) {
-    console.log(len);
     let oppArray =[];
     const citiesRef = db.collection('transactions');
     const snapshot = await citiesRef.orderBy('rid','desc').limit(Number(len)).get();
-    // console.log(snapshot.docs.map(doc => doc.data()));
 
     snapshot.forEach(doc => {
-      console.log(doc);
       oppArray.push({updateOne: {
         filter: { _id: doc.data()._id },
         update: { profit:doc.data().profit, returnDate: doc.data().returnDate, returned: doc.data().returned}
