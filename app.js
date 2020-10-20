@@ -438,6 +438,10 @@ mongoose
     const doc = db.collection('type_of_transaction').orderBy("_id","desc").limit(1);
     const observer = doc.onSnapshot(docSnapshot => {
       docSnapshot.forEach(doc => {
+        let order = new Orders (doc.data());
+        order.save();
+      Lastiduseds.updateOne( {_id:0} ,{$inc:{ID:1}},{upsert:true}).then(console.log("L"))
+        
         if (doc.data().T==='T') {
           sync_Tran_F_to_L();
         }
