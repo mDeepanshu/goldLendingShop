@@ -426,7 +426,7 @@ mongoose
       docSnapshot.forEach(doc => {
         customer = new Customer (doc.data());
         customer.save();
-      Length.updateOne( {_id:2} ,{$inc:{length:Number(diff)}},{upsert:true}).then(console.log("L"))
+      Length.updateOne( {_id:2} ,{$inc:{length:1}},{upsert:true}).then(console.log("L"))
 
     }); 
     }, err => {
