@@ -28,7 +28,6 @@ var db = admin.firestore();
 let customerLength ;
 let idToUse ;
 let lastIdUsedDate ;
-let isInternet=true;
 today = new Date();
 if (String(today.getMonth()+1).length==1) {
   modiMonth= '0'+ String(today.getMonth()+1)
@@ -70,30 +69,7 @@ mongoose
   });
   listenFCus();
        listenFOrders();
-  //0
-// app.post("/api/connectionChange", (req, res) => {
-  //   console.log("online");
-  //   let status= req.body.status;
-  //   if (status == true) {
-  //     this.isInternet=true;  
-  //       check_Sync_Status();
-  //      check_Cus_Sync_Status();
-        
-  //   }
-  //   else if(status == false){
-  //     console.log("offline");
-  //     this.isInternet=false;
-  //     const unsubOrders = db.collection('orders').onSnapshot(() => {});
-  //     unsubOrders();
-  //     const unsubCus = db.collection('customers').onSnapshot(() => {});
-  //     unsubCus();
-      
-  //   }
-  //   res.status(201).json({
-  //     message: 'read successfully'
-  //   });
 
-  // });
   // 1
   app.post("/api/transactions", async(req, res) => {
 
@@ -448,132 +424,61 @@ mongoose
     const doc = db.collection('customer').orderBy("_id","desc").limit(1);
     const observer = doc.onSnapshot(docSnapshot => {
       docSnapshot.forEach(doc => {
-        Customer.aggregate([{$sort:{_id:-1}},{$limit:1}]).then(documents => {
-          console.log("line 477",documents.length,doc.data()._id);
-          if(documents.length!=0 && doc.data()._id>documents[0]._id ){
-           syncCus(doc.data()._id-documents[0]._id);
-          }
-          else if(documents.length===0){
-           syncCus(doc.data()._id+1);
-          }
-        })
+        customer = new Customer (doc.data());
+        customer.save();
+      Length.updateOne( {_id:2} ,{$inc:{length:Number(diff)}},{upsert:true}).then(console.log("L"))
+
     }); 
     }, err => {
       console.log(`Encountered error: ${err}`);
     });
   }
  //20
-  async function syncCus(diff) {
-      let  promise = new Promise(async(res,rej) => {
-          let cusArray =[];
-          const query = db.collection('customer').orderBy("_id","desc").limit(diff);
-          const snapshot = await query.get();
-          snapshot.forEach(doc => {
-          console.log("doc.data() customer",doc.data());
-            cusArray.push(doc.data())
-      });
-      res(cusArray);
-    });
-  let result = await promise;
-  // console.log("result",result);
-    Customer.insertMany(result).then(function(){ 
-      console.log("Customer inserted")  // Success 
-      Length.updateOne( {_id:2} ,{$inc:{length:Number(diff)}},{upsert:true}).then(console.log("L"))
-  }).catch(function(error){
-      console.log("error",error)      // Failure 
-  }); 
-
-
-  }
-
    function listenFOrders() {
-    const doc = db.collection('values').doc('values');
-    const observer = doc.onSnapshot(doc => {
-      Lastiduseds.find({"_id":0}).then(documents => {
-        console.log("line519",documents[0].ID,doc.data().today_transactions);
-        if(documents[0].ID!=0 && doc.data().today_transactions>documents[0].ID ){
-          syncFtoL(doc.data().today_transactions-documents[0].ID);
-         }
-         else if(documents[0].ID===0){
-          syncFtoL(doc.data().today_transactions+1);
-         }
-
-      })
+    const doc = db.collection('type_of_transaction').orderBy("_id","desc").limit(1);
+    const observer = doc.onSnapshot(docSnapshot => {
+      docSnapshot.forEach(doc => {
+        if (doc.data().T==='T') {
+          sync_Tran_F_to_L();
+        }
+        else if(doc.data().T==='R'){
+          sync_DC_F_to_L();
+        }
+        else if(doc.data().T==='DC'){
+          sync_RTran_F_to_L();
+        }
+    }); 
     }, err => {
       console.log(`Encountered error: ${err}`);
     });
    
   }
-  async function syncFtoL(diff) {
-    let tranCount=0;
-    let dcCount=0 ;
-    let rtransCount=0 ;
 
-      const citiesRef = db.collection('type_of_transaction');
-      const snapshot = await citiesRef.orderBy('_id','desc').limit(Number(diff)).get();
-    Orders.insertMany(snapshot.docs.map(doc => doc.data())).then(console.log("orders inserted"));
-    Lastiduseds.updateOne( {_id:0} ,{$inc:{ID:Number(diff)}},{upsert:true}).then(console.log("Lastiduseds"));
-      snapshot.forEach(doc => {
-        switch (doc.data().T) {
-          case 'DC'://dc
-          dcCount++
-            break;
-          case 'R'://r
-          rtransCount++
-            break;
-          case 'T'://t
-          tranCount++
-            break;
-        }
-      });
-    if (tranCount!=0) {
-      then_sync_Tran_F_to_L(tranCount);
-    }
-    if (dcCount!=0) {
-      then_sync_DC_F_to_L(dcCount-1);
-    }
-    if (rtransCount!=0) {
-      then_sync_RTran_F_to_L(rtransCount-1);
-    }
-  } 
-  // then_sync_Tran_F_to_L(1);
-  async function then_sync_Tran_F_to_L(len) {
+  async function sync_Tran_F_to_L() {
     const citiesRef = db.collection('transactions');
-    const snapshot = await citiesRef.orderBy('_id','desc').limit(Number(len)).get();
+    const snapshot = await citiesRef.orderBy('_id','desc').limit(1).get();
     Transactions.insertMany(snapshot.docs.map(doc => doc.data())).then(console.log("Transactions inserted"))
     snapshot.forEach(doc => {
       Customer.findOne({_id:Number(doc.data().cusId)}).then((customer)=>{
-        if(customer!=null){
-          if (customer.transactions.includes(doc.data()._id)) {
-        }
-        else if (customer != undefined ){
           customer.transactions.push(doc.data()._id)
           const customers = new Customer(customer);
           customers.save().then(console.log("done"));
-        }
-      }
       })
       
     });
   }
-  async function then_sync_DC_F_to_L(len) {
+  async function sync_DC_F_to_L() {
     const citiesRef = db.collection('debitCredit');
-    const snapshot = await citiesRef.orderBy('_id','desc').limit(Number(len)).get();
+    const snapshot = await citiesRef.orderBy('_id','desc').limit(1).get();
     DebitCredit.insertMany(snapshot.docs.map(doc => doc.data())).then(console.log("DB inserted"));
 
   }
-  async function then_sync_RTran_F_to_L(len) {
-    let oppArray =[];
+  async function sync_RTran_F_to_L() {
     const citiesRef = db.collection('transactions');
-    const snapshot = await citiesRef.orderBy('rid','desc').limit(Number(len)).get();
-
+    const snapshot = await citiesRef.orderBy('rid','desc').limit(1).get();
     snapshot.forEach(doc => {
-      oppArray.push({updateOne: {
-        filter: { _id: doc.data()._id },
-        update: { profit:doc.data().profit, returnDate: doc.data().returnDate, returned: doc.data().returned}
-      }});
+      Transactions.updateOne({_id:doc.data()._id},{profit:doc.data().profit, returnDate: doc.data().returnDate, returned: doc.data().returned})
     });
-    Transactions.bulkWrite(oppArray);
     
   }
 
