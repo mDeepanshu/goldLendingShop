@@ -446,10 +446,10 @@ mongoose
           sync_Tran_F_to_L();
         }
         else if(doc.data().T==='R'){
-          sync_DC_F_to_L();
+          sync_RTran_F_to_L();
         }
         else if(doc.data().T==='DC'){
-          sync_RTran_F_to_L();
+          sync_DC_F_to_L();
         }
     }); 
     }, err => {
@@ -475,7 +475,6 @@ mongoose
     const citiesRef = db.collection('debitCredit');
     const snapshot = await citiesRef.orderBy('_id','desc').limit(1).get();
     DebitCredit.insertMany(snapshot.docs.map(doc => doc.data())).then(console.log("DB inserted"));
-
   }
   async function sync_RTran_F_to_L() {
     const citiesRef = db.collection('transactions');
