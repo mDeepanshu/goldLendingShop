@@ -106,6 +106,7 @@ mongoose
   });
   // 2
   app.post("/api/customer", async(req, res) => {
+    console.log("line 109 inserver trying to add cys");
     const customer = new Customer({
       _id:this.customerLength,
       name: req.body.name,
@@ -124,7 +125,7 @@ mongoose
       caste: req.body.caste,
       transactions:[]
     }
-    customer.save();
+    customer.save().then(console.log("customer saved"));
          const res0 =  db.collection('customer').doc(String(this.customerLength)).set(customerF);
  
     Length.updateOne( {_id:2} ,{$inc:{length:1}},{upsert:true}).then(console.log("customer last id updates"));
@@ -424,10 +425,13 @@ mongoose
     const doc = db.collection('customer').orderBy("_id","desc").limit(1);
     const observer = doc.onSnapshot(docSnapshot => {
       docSnapshot.forEach(doc => {
-        customer = new Customer (doc.data());
-        customer.save();
-      Length.updateOne( {_id:2} ,{$inc:{length:1}},{upsert:true}).then(console.log("L"))
-
+        Length.find({_id:2}).then((document)=>{
+          if (document[0].length!=doc.data()._id+1) {
+            customer = new Customer (doc.data());
+            customer.save();
+          Length.updateOne( {_id:2} ,{$inc:{length:1}},{upsert:true}).then(console.log("L"))
+          }
+    })
     }); 
     }, err => {
       console.log(`Encountered error: ${err}`);
@@ -438,20 +442,25 @@ mongoose
     const doc = db.collection('type_of_transaction').orderBy("_id","desc").limit(1);
     const observer = doc.onSnapshot(docSnapshot => {
       docSnapshot.forEach(doc => {
+        Lastiduseds.find({_id:0}).then((document)=>{
+          console.log("line 445",document[0].ID,doc.data()._id+1);
+          if (document[0].ID!=doc.data()._id+1) {
         let order = new Orders (doc.data());
         order.save();
       Lastiduseds.updateOne( {_id:0} ,{$inc:{ID:1}},{upsert:true}).then(console.log("L"))
         
         if (doc.data().T==='T') {
           sync_Tran_F_to_L();
-        }
-        else if(doc.data().T==='R'){
+        }else if(doc.data().T==='R'){
           sync_RTran_F_to_L();
-        }
-        else if(doc.data().T==='DC'){
+        }else if(doc.data().T==='DC'){
           sync_DC_F_to_L();
         }
+      }
+      })
+
     }); 
+    
     }, err => {
       console.log(`Encountered error: ${err}`);
     });
