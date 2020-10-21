@@ -106,7 +106,7 @@ mongoose
   });
   // 2
   app.post("/api/customer", async(req, res) => {
-    console.log("line 109 inserver trying to add cys");
+    console.log("line 109 inserver trying to add cys",this.customerLength);
     const customer = new Customer({
       _id:this.customerLength,
       name: req.body.name,
@@ -116,6 +116,7 @@ mongoose
       caste: req.body.caste,
       transactions:[]
     });
+    
     customerF= {
       _id:this.customerLength,
       name: req.body.name,
@@ -194,6 +195,7 @@ mongoose
   });
   // 7
   app.post("/api/getCustomer", (req, res) => {
+    console.log("line 197 inserver getcus");
     Arr=req.body
     if (Arr.length==0) {
       Customer.find().then(documents => {
@@ -489,7 +491,7 @@ mongoose
     const citiesRef = db.collection('transactions');
     const snapshot = await citiesRef.orderBy('rid','desc').limit(1).get();
     snapshot.forEach(doc => {
-      Transactions.updateOne({_id:doc.data()._id},{profit:doc.data().profit, returnDate: doc.data().returnDate, returned: doc.data().returned})
+      Transactions.updateOne({_id:doc.data()._id},{$set:{profit:doc.data().profit, returnDate: true, returned: doc.data().returned}})
     });
     
   }
