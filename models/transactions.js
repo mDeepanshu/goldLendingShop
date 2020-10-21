@@ -10,7 +10,7 @@ const transactionsSchema = mongoose.Schema({
   cusId:{ type:Number,required:true},
   returnDate:{type:String},
   profit:{type:Number},
-  rid:{type:String},
+  rid:{type:Number},
   returned:{type:Boolean}
 
 

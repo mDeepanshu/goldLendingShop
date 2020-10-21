@@ -488,10 +488,12 @@ mongoose
     DebitCredit.insertMany(snapshot.docs.map(doc => doc.data())).then(console.log("DB inserted"));
   }
   async function sync_RTran_F_to_L() {
+    console.log("line 491");
     const citiesRef = db.collection('transactions');
     const snapshot = await citiesRef.orderBy('rid','desc').limit(1).get();
     snapshot.forEach(doc => {
-      Transactions.updateOne({_id:doc.data()._id},{$set:{profit:doc.data().profit, returnDate: true, returned: doc.data().returned}})
+      // console.log(doc.data());
+      Transactions.updateOne({_id:doc.data()._id},{$set:{profit:doc.data().profit, returnDate: doc.data().returnDate, returned: true}},{upsert:true}).then(console.log("tUpdated"))
     });
     
   }
