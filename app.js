@@ -11,6 +11,7 @@ const DebitCredit = require("./models/debitCredit");
 const Reports = require("./models/reports");
 const Lastiduseds = require("./models/lastIdUsed");
 const Orders = require('./models/Orders');
+const ItemsName = require('./models/itemsName');
 // const LastCheckedIds = require('./models/lastCheckedIds')
 
 app.use(bodyParser.json());
@@ -68,13 +69,14 @@ mongoose
       next();
   });
   listenFCus();
-       listenFOrders();
+  listenFOrders();
 
   // 1
   app.post("/api/transactions", async(req, res) => {
-
+    getLastiduseds().then(async(lastId)=>{
+    console.log("line77",lastId);
     const transactions = new Transactions({
-      _id:this.idToUse,//req.body._Id also gives id (hv to remove it)
+      _id:lastId,//req.body._Id also gives id (hv to remove it)
       itemName: req.body.itemName,
       weight: req.body.weight,
       principle: req.body.principle,
@@ -85,7 +87,7 @@ mongoose
 
     });
     const transactionsF={
-      _id:this.idToUse,//req.body._Id also gives id (hv to remove it)
+      _id:lastId,//req.body._Id also gives id (hv to remove it)
       itemName: req.body.itemName,
       weight: req.body.weight,
       principle: req.body.principle,
@@ -96,19 +98,28 @@ mongoose
 
     }
     transactions.save();
-      const res0 = await db.collection('transactions').doc(String(this.idToUse)).set(transactionsF);    
+      const res0 = await db.collection('transactions').doc(String(lastId)).set(transactionsF);    
       const cityRef = db.collection('values').doc('values');
-      const res1 = cityRef.update({today_transactions: this.idToUse});
+      const res1 = cityRef.update({today_transactions: lastId});
     Lastiduseds.updateOne( {_id:0} ,{$inc:{ID:1}},{upsert:true}).then(console.log("lastIdused updates"));
     res.status(201).json({
       message: 'Post added successfully'
     });
+  postOrders('T');
+  cusTran(req.body.cusId);
+});
   });
   // 2
   app.post("/api/customer", async(req, res) => {
-    console.log("line 109 inserver trying to add cys",this.customerLength);
+    let length;
+    await Length.findOne({_id:2}).then(async(documents) => {
+      length = documents.length;
+      documents.length = length+1;
+      documents.save();
+    }).then(console.log("customer length updates"));
+    console.log("line 109 inserver trying to add cys",length);
     const customer = new Customer({
-      _id:this.customerLength,
+      _id:length,
       name: req.body.name,
       fname: req.body.fname,
       mobNum: req.body.mobNum,
@@ -118,7 +129,7 @@ mongoose
     });
     
     customerF= {
-      _id:this.customerLength,
+      _id:length,
       name: req.body.name,
       fname: req.body.fname,
       mobNum: req.body.mobNum,
@@ -127,26 +138,25 @@ mongoose
       transactions:[]
     }
     customer.save().then(console.log("customer saved"));
-         const res0 =  db.collection('customer').doc(String(this.customerLength)).set(customerF);
+         const res0 =  db.collection('customer').doc(String(length)).set(customerF);
  
-    Length.updateOne( {_id:2} ,{$inc:{length:1}},{upsert:true}).then(console.log("customer last id updates"));
+    // Length.updateOne( {_id:2} ,{$inc:{length:1}},{upsert:true}).then(console.log("customer last id updates"));
 
   });
   // 3
-  app.post("/api/cusTran", (req, res) => { //find
-    Customer.findOne({ _id: req.body.uid}).then(async(customer) => {
+  function cusTran(uid) {
+    
+    Customer.findOne({ _id: uid}).then(async(customer) => {
       customer.transactions.push( this.idToUse )
-        const washingtonRef = db.collection('customer').doc(String(req.body.uid));
+        const washingtonRef = db.collection('customer').doc(String(uid));
       const unionRes = await washingtonRef.update({
         transactions: admin.firestore.FieldValue.arrayUnion(String(this.idToUse))
       });
       customer.save()
     });
-    res.status(201).json({
-      message: 'length updated successfully'
-    });   
-  });
-  // 4
+
+  }
+    // 4
   app.post("/api/posts", (req, res) => {
     console.log(req.body);
     Arr=req.body
@@ -172,17 +182,17 @@ mongoose
     
   });
   // 5
-  app.get("/api/lastIdUsed", (req, res) => {
-    Lastiduseds.find().then(documents => {
-      this.idToUse=documents[0].ID;
-      console.log("lastIdUsed",this.idToUse);
-      this.lastIdUsedDate = documents[0].date
-      res.status(200).json({
-        message: "Posts fetched successfully!",
-        lastIdUsed: documents
-      });
-    });
-  });
+   function getLastiduseds() {
+    const promise1 = new Promise((res,rej) =>{
+  Lastiduseds.find().then(documents => {
+          this.idToUse=documents[0].ID;
+          console.log("lastIdUsed",this.idToUse);
+          this.lastIdUsedDate = documents[0].date
+          res(documents[0].ID);
+        });
+      })
+      return promise1;
+}
   // 6
   app.get("/api/reports", (req, res) => {
     Reports.find().then(documents => {
@@ -195,7 +205,6 @@ mongoose
   });
   // 7
   app.post("/api/getCustomer", (req, res) => {
-    console.log("line 197 inserver getcus");
     Arr=req.body
     if (Arr.length==0) {
       Customer.find().then(documents => {
@@ -261,17 +270,9 @@ mongoose
 
   });
   // 10
-  app.get("/api/length", (req, res) => {
-    Length.find().then(documents => {
-      res.status(200).json({
-        message: "Posts fetched successfully!",
-        length: documents
-      });
-      this.customerLength = documents[0].length;
-
-    });
-
-
+  app.post("/api/addToItemsName", (req, res) => { 
+    console.log("line 435",req.body);
+    ItemsName.update({ _id: 0 },{ $push: { itemsName:req.body } }   ).then(console.log("itemname added"))
   });
   // 11
   app.post("/api/indiTrans", (req, res) => {
@@ -285,40 +286,52 @@ mongoose
   });
   // 12
   app.post("/api/return", async(req, res) => {
+    
       const cityRef  =  db.collection('transactions').doc(String(req.body._id));
-      const res0 =  cityRef.update({profit:req.body.profit,returnDate:date});
-      const cityRef1 = db.collection('values').doc('values');
-      const res1 =  cityRef1.update({today_transactions: this.idToUse});
+      const res0 =  cityRef.update({profit:req.body.profit,returnDate:date,returned:true});
+
     Lastiduseds.updateOne( {_id:0} ,{$inc:{ID:1}},{upsert:true}).then(console.log("lastIdused updates return"));
-    Transactions.findOneAndUpdate({ _id: req.body._id},{$set:{profit:req.body.profit,returnDate:date}})
+    Transactions.findOneAndUpdate({ _id: req.body._id},{$set:{profit:req.body.profit,returnDate:date,returned:true}})
     .then(transactions => {
+      console.log("line 297 Done return");
     });
    res.status(201).json({
     message: 'return updated successfully'
   });
+  getLastiduseds().then((lastId)=>{
+    postOrders('R');
+    const cityRef1 = db.collection('values').doc('values');
+    const res1 =  cityRef1.update({today_transactions:lastId});
+    
+    });
+    
   })
   // 13
   app.post("/api/debitCredit", async(req, res) => { 
+    getLastiduseds().then(async(lastId)=>{
     const debitCredit = new DebitCredit({
-      _id:this.idToUse,
+      _id:lastId,
       amount: req.body.amount,
       date: date,
       description: req.body.description,
     });
     dc={
-      _id:this.idToUse,
+      _id:lastId,
       amount: req.body.amount,
       date: date,
       description: req.body.description,
     }
     debitCredit.save();
-        const res0 =  db.collection('debitCredit').doc(String(this.idToUse)).set(dc);
+        const res0 =  db.collection('debitCredit').doc(String(lastId)).set(dc);
         const cityRef = db.collection('values').doc('values');
-        const res1 =  cityRef.update({today_transactions: this.idToUse});
+        const res1 =  cityRef.update({today_transactions: lastId});
     Lastiduseds.updateOne( {_id:0} ,{$inc:{ID:1}},{upsert:true}).then(console.log("lastIdused updates return"));
     res.status(201).json({
       message: 'Post added successfully'
     });
+  postOrders('DC');
+  });
+  
   })
   // 14
   app.post("/api/mainBal", async(req, res) => { 
@@ -355,8 +368,7 @@ mongoose
 
   });
   //17
-  app.post("/api/postOrders", (req, res) => { //one() will store mainBal because the date is changed  two() does not stores date
-    // let tdate='';
+  function postOrders(T) {
     let main_bal;
     let id =this.idToUse;
     console.log("this.idToUse",this.idToUse, "post orders");
@@ -386,14 +398,19 @@ mongoose
         const order = new Orders({
           _id:Number(id),//
           date:date,
-          T:req.body.T,
+          T:T,
           main_bal:main_bal
         });
-        
+        const orderF={
+          _id:Number(id),//
+          date:date,
+          T:T,
+          main_bal:main_bal
+        }
         const cityRef = db.collection('values').doc('values');
         Lastiduseds.findOneAndUpdate({ _id:0},{$set:{date:date}}).then(console.log(date))
              const res0 = cityRef.update({date: date});
-             const res1 = db.collection('type_of_transaction').doc(String(id)).set(order);
+             const res1 = db.collection('type_of_transaction').doc(String(id)).set(orderF);
         order.save();
     }
     }
@@ -402,20 +419,19 @@ mongoose
       const order = new Orders({
         _id:Number(id),//req.body._Id also gives id (hv to remove it)
         date:this.date,
-        T:req.body.T
+        T:T
       });
      const orderF = {
       _id:Number(id),//req.body._Id also gives id (hv to remove it)
       date:this.date,
-      T:req.body.T
+      T:T
      }
          const res0 = db.collection('type_of_transaction').doc(String(id)).set(orderF);
 
     order.save();
   
     }
-  
-  });
+  }
   //18
   app.get("/api/newTrId", (req, res) => { // after adding new tr, to add tr-id into cus-Tr arr without reloading
       res.status(200).json({
@@ -423,6 +439,15 @@ mongoose
     });
   });
   //19
+  app.get("/api/getItemsName", (req, res) => { 
+    ItemsName.find().then((document)=>{
+      res.status(200).json({
+        itemsName:document[0].itemsName
+      });
+    })
+  });
+
+  
   function listenFCus() { //listen firebase customer
     const doc = db.collection('customer').orderBy("_id","desc").limit(1);
     const observer = doc.onSnapshot(docSnapshot => {
@@ -497,8 +522,6 @@ mongoose
     });
     
   }
-
-
 
 
 
