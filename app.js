@@ -271,8 +271,8 @@ mongoose
   });
   // 10
   app.post("/api/addToItemsName", (req, res) => { 
-    console.log("line 435",req.body);
-    ItemsName.update({ _id: 0 },{ $push: { itemsName:req.body } }   ).then(console.log("itemname added"))
+    console.log("line 274",req.body.element);
+    ItemsName.update({ _id: 0 },{ $push: { itemsName:req.body.element } }   ).then(console.log("itemname added"))
   });
   // 11
   app.post("/api/indiTrans", (req, res) => {
@@ -522,10 +522,6 @@ mongoose
     });
     
   }
-
-
-
-
 
 
 
