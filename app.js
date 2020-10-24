@@ -89,7 +89,7 @@ mongoose
     const transactionsF={
       _id:lastId,//req.body._Id also gives id (hv to remove it)
       itemName: req.body.itemName,
-      weight: req.body.weight,
+      weight: String(req.body.weight),
       principle: req.body.principle,
       roi: req.body.roi,
       issueDate: date,
