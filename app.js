@@ -1,9 +1,9 @@
-const express = require('express');
+{const express = require('express');
 const bodyParser = require("body-parser");
 const app = express();
-const mongoose = require("mongoose");
+const mongoose = require("mongoose");}
 
-var admin = require('firebase-admin');
+{var admin = require('firebase-admin');
 const Transactions = require("./models/transactions");
 const Customer = require("./models/customer");
 const Length = require("./models/length");
@@ -11,8 +11,7 @@ const DebitCredit = require("./models/debitCredit");
 const Reports = require("./models/reports");
 const Lastiduseds = require("./models/lastIdUsed");
 const Orders = require('./models/Orders');
-const ItemsName = require('./models/itemsName');
-// const LastCheckedIds = require('./models/lastCheckedIds')
+const ItemsName = require('./models/itemsName');}
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -317,7 +316,7 @@ mongoose
     });
     dc={
       _id:lastId,
-      amount: req.body.amount,
+      amount: Number(req.body.amount),
       date: date,
       description: req.body.description,
     }
