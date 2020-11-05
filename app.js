@@ -73,7 +73,6 @@ mongoose
   // 1
   app.post("/api/transactions", async(req, res) => {
     getLastiduseds().then(async(lastId)=>{
-    console.log("line77",lastId);
     const transactions = new Transactions({
       _id:lastId,//req.body._Id also gives id (hv to remove it)
       itemName: req.body.itemName,
@@ -110,13 +109,19 @@ mongoose
   });
   // 2
   app.post("/api/customer", async(req, res) => {
-    let length;
+    if (req.body._Id !==-1) {
+      console.log("113",req.body);
+
+      Customer.findOneAndUpdate({_id:req.body._Id},{$set:{name: req.body.name,fname: req.body.fname,mobNum: req.body.mobNum,village: req.body.village,caste: req.body.caste,}
+      }).then(console.log("customerUpdated"))
+    }
+    else{
+      let length;
     await Length.findOne({_id:2}).then(async(documents) => {
       length = documents.length;
       documents.length = length+1;
       documents.save();
     }).then(console.log("customer length updates"));
-    console.log("line 109 inserver trying to add cys",length);
     const customer = new Customer({
       _id:length,
       name: req.body.name,
@@ -138,8 +143,8 @@ mongoose
     }
     customer.save().then(console.log("customer saved"));
          const res0 =  db.collection('customer').doc(String(length)).set(customerF);
+        }
  
-    // Length.updateOne( {_id:2} ,{$inc:{length:1}},{upsert:true}).then(console.log("customer last id updates"));
 
   });
   // 3
