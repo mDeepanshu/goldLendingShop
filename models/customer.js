@@ -8,7 +8,7 @@ const customerSchema = mongoose.Schema({
   _id:{type:Number, required:true},
   name: { type: String, required: true },
   fname: { type: String, required: true },
-  mobNum:{ type:Number,required:false},
+  mobNum:{ type:String,required:false},
   village:{ type:String,required:true},
   caste:{ type:String,required:true},
   transactions:[String]

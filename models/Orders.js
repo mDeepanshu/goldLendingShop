@@ -4,7 +4,8 @@ const ordersSchema = mongoose.Schema({
   _id:{type:Number, required:true},
   date:{type:String, required:true},
   T:{ type:String,required:true},
-  main_bal:{ type:Number}
+  main_bal:{ type:Number},
+  approved:{type:Boolean}
 
 });
 

@@ -12,6 +12,7 @@ const Reports = require("./models/reports");
 const Lastiduseds = require("./models/lastIdUsed");
 const Orders = require('./models/Orders');
 const ItemsName = require('./models/itemsName');
+const Accounts =  require('./models/accounts');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -423,7 +424,8 @@ mongoose
       const order = new Orders({
         _id:Number(id),//req.body._Id also gives id (hv to remove it)
         date:this.date,
-        T:T
+        T:T,
+        approved:false
       });
      const orderF = {
       _id:Number(id),//req.body._Id also gives id (hv to remove it)
@@ -527,7 +529,17 @@ mongoose
     
   }
 
+//
+app.get("/api/getAccounts", (req, res) => {
+  console.log("533");
 
+  Accounts.find().then((accounts)=>{
+    console.log(accounts);
+    res.status(200).json({
+      "accounts":accounts
+    });
+  })
+});
 
 
 
