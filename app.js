@@ -42,7 +42,8 @@ if (String(today.getDate()).length==1) {
 else{
   modiDate =String(today.getDate())
 }
-// 
+// mongodb+srv://damon:qwert123@cluster0.qyevd.mongodb.net/anilDeriyaJwellers?retryWrites=true
+// mongodb://localhost:27017/
 date= (String(today.getFullYear())+'-'+modiMonth+'-'+modiDate);
 mongoose
   .connect(
@@ -404,7 +405,8 @@ mongoose
           _id:Number(id),//
           date:date,
           T:T,
-          main_bal:main_bal
+          main_bal:main_bal,
+          approved:false
         });
         const orderF={
           _id:Number(id),//
@@ -541,7 +543,9 @@ app.get("/api/getAccounts", (req, res) => {
   })
 });
 
-
+app.get("/api/approveIt", (req, res) => {
+  
+});
 
 
 
