@@ -44,6 +44,7 @@ else{
 }
 // mongodb+srv://damon:qwert123@cluster0.qyevd.mongodb.net/anilDeriyaJwellers?retryWrites=true
 // mongodb://localhost:27017/
+// 
 date= (String(today.getFullYear())+'-'+modiMonth+'-'+modiDate);
 mongoose
   .connect(
